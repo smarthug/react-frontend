@@ -1,11 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { fetchPanelSummary } from '../api'
 
 function PanelCard({ panel, templates, onUpdate, onClick, onDelete, dragHandleProps }) {
   const [showSettings, setShowSettings] = useState(false)
+  const [summary, setSummary] = useState(null)
   const [outputPath, setOutputPath] = useState(panel.output_path || '')
   const [templateId, setTemplateId] = useState(panel.prompt_template_id || '')
   const [notes, setNotes] = useState(panel.notes || '')
   const [transition, setTransition] = useState(panel.transition || 'Auto')
+
+  useEffect(() => {
+    fetchPanelSummary(panel.id).then(setSummary).catch(() => {})
+  }, [panel.id])
 
   const handleSaveSettings = () => {
     onUpdate(panel.id, {
@@ -44,7 +50,9 @@ function PanelCard({ panel, templates, onUpdate, onClick, onDelete, dragHandlePr
 
       <div className="panel-card-body" onClick={() => onClick(panel)} role="button" tabIndex={0}>
         <div className="panel-card-image-placeholder">
-          {panel.output_path ? (
+          {summary?.best_cut ? (
+            <img className="panel-card-thumbnail" src={summary.best_cut.src} alt="Best cut" />
+          ) : panel.output_path ? (
             <span className="panel-card-path-badge" title={panel.output_path}>
               {panel.output_path.split('/').slice(-2).join('/')}
             </span>
@@ -52,7 +60,15 @@ function PanelCard({ panel, templates, onUpdate, onClick, onDelete, dragHandlePr
             <span className="panel-card-no-path">No output path set</span>
           )}
         </div>
-        <div className="panel-card-click-hint">Click to view cuts</div>
+        {summary && summary.cut_count > 0 ? (
+          <div className="panel-card-stats">
+            <span className="panel-stat-count">{summary.cut_count} cuts</span>
+            {summary.pass_count > 0 && <span className="panel-stat-pass">{summary.pass_count} pass</span>}
+            {summary.fail_count > 0 && <span className="panel-stat-fail">{summary.fail_count} fail</span>}
+          </div>
+        ) : (
+          <div className="panel-card-click-hint">Click to view cuts</div>
+        )}
       </div>
 
       {showSettings && (

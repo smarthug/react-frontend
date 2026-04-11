@@ -39,6 +39,18 @@ export const fetchCut = (id) => request(`/cuts/${id}`);
 
 export const deleteCut = (id) => request(`/cuts/${id}`, { method: 'DELETE' });
 
+export const reReviewCut = (id) =>
+  request(`/cuts/${id}/re-review`, { method: 'POST' });
+
+export const bulkDeleteCuts = (ids) =>
+  request('/cuts/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) });
+
+export const bulkReReviewCuts = (ids) =>
+  request('/cuts/bulk-re-review', { method: 'POST', body: JSON.stringify({ ids }) });
+
+export const fetchPanelSummary = (panelId) =>
+  request(`/panels/${panelId}/summary`);
+
 // Templates
 export const fetchTemplates = () => request('/templates');
 

@@ -23,23 +23,50 @@ function StatusBadge({ status }) {
   return <span className={`cut-card-status ${s.cls}`}>{s.text}</span>
 }
 
-function CutCard({ cut, onDelete }) {
+function CutCard({ cut, onDelete, onImageClick, onReReview, selectMode, selected, onSelect }) {
   const review = cut.review
   const hasReview = review && review.total_score != null
+  const params = cut.generation_params ? JSON.parse(cut.generation_params) : null
 
   return (
-    <div className="cut-card">
+    <div className={`cut-card ${selected ? 'cut-card-selected' : ''}`}>
       <div className="cut-card-image-wrapper">
-        <button
-          className="cut-delete-btn"
-          type="button"
-          onClick={() => onDelete(cut.id)}
-          title="Delete"
-        >
-          &#x1F5D1;
-        </button>
+        {selectMode && (
+          <input
+            type="checkbox"
+            className="cut-card-checkbox"
+            checked={selected}
+            onChange={() => onSelect(cut.id)}
+          />
+        )}
+        <div className="cut-card-btn-group">
+          {onReReview && cut.status !== 'pending' && (
+            <button
+              className="cut-rereview-btn"
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onReReview(cut.id) }}
+              title="Re-review"
+            >
+              &#x21BB;
+            </button>
+          )}
+          <button
+            className="cut-delete-btn"
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDelete(cut.id) }}
+            title="Delete"
+          >
+            &#x1F5D1;
+          </button>
+        </div>
         <StatusBadge status={cut.status} />
-        <img src={cut.src} alt={cut.description || cut.image_filename} loading="lazy" />
+        <img
+          src={cut.src}
+          alt={cut.description || cut.image_filename}
+          loading="lazy"
+          onClick={() => onImageClick && onImageClick()}
+          style={{ cursor: onImageClick ? 'pointer' : 'default' }}
+        />
       </div>
 
       <div className="cut-card-info">
@@ -56,12 +83,22 @@ function CutCard({ cut, onDelete }) {
           </>
         )}
 
+        {review?.prompt_template_name && (
+          <div className="cut-card-prompt-tag" title={`Reviewed with: ${review.prompt_template_name}`}>
+            {review.prompt_template_name}
+          </div>
+        )}
+
         {review?.feedback && (
           <div className="cut-card-feedback">{review.feedback}</div>
         )}
 
         {cut.error_message && (
           <div className="cut-card-error">{cut.error_message}</div>
+        )}
+
+        {params?.seed && (
+          <div className="cut-card-seed">Seed: {params.seed}</div>
         )}
 
         <div className="cut-card-meta">
