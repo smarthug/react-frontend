@@ -1,0 +1,17 @@
+{
+  "agents": [
+    {
+      "agent_id": "a711eebd45b8246a8",
+      "agent_type": "oh-my-claudecode:document-specialist",
+      "started_at": "2026-04-11T05:10:17.607Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-11T05:12:15.614Z",
+      "duration_ms": 118007
+    }
+  ],
+  "total_spawned": 1,
+  "total_completed": 1,
+  "total_failed": 0,
+  "last_updated": "2026-04-11T05:12:15.715Z"
+}

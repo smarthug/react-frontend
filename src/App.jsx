@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import StoryboardPage from './pages/StoryboardPage'
 import CutsPage from './pages/CutsPage'
+import SettingsPage from './pages/SettingsPage'
 
 function App() {
   return (
@@ -15,7 +16,7 @@ function App() {
             <Route path="/" element={<Navigate to="/storyboards" replace />} />
             <Route path="/storyboards" element={<StoryboardPage />} />
             <Route path="/cuts" element={<CutsPage />} />
-            <Route path="/settings" element={<div style={{ color: '#9ca3af', padding: '40px', textAlign: 'center' }}>Settings page coming soon.</div>} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </div>
       </div>
