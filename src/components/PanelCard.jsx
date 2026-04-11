@@ -1,67 +1,111 @@
 import { useState } from 'react'
 
-function PanelCard({ panel, onTransitionChange, onNotesChange, onPlayClick, dragHandleProps }) {
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(panel.notes)
+function PanelCard({ panel, templates, onUpdate, onClick, onDelete, dragHandleProps }) {
+  const [showSettings, setShowSettings] = useState(false)
+  const [outputPath, setOutputPath] = useState(panel.output_path || '')
+  const [templateId, setTemplateId] = useState(panel.prompt_template_id || '')
+  const [notes, setNotes] = useState(panel.notes || '')
+  const [transition, setTransition] = useState(panel.transition || 'Auto')
 
-  const handleEditClick = () => {
-    setDraft(panel.notes)
-    setEditing(true)
-  }
-
-  const handleBlur = () => {
-    setEditing(false)
-    onNotesChange(panel.id, draft)
+  const handleSaveSettings = () => {
+    onUpdate(panel.id, {
+      output_path: outputPath || null,
+      prompt_template_id: templateId ? Number(templateId) : null,
+      notes,
+      transition,
+    })
+    setShowSettings(false)
   }
 
   return (
     <div className="panel-card">
-      <div className="panel-card-header">
-        <span className="panel-drag-handle" {...dragHandleProps}>&#x2801;&#x2802;</span>
+      <div className="panel-card-header" {...dragHandleProps}>
+        <span className="panel-drag-handle">&#x2630;</span>
         <span className="panel-card-name">{panel.name}</span>
-      </div>
-
-      <div className="panel-image-area" onClick={() => onPlayClick(panel)}>
-        <button className="panel-play-btn" type="button">
-          &#9654;
-        </button>
-        <span className="panel-number">{panel.number}</span>
-      </div>
-
-      <div className="panel-bottom-bar">
-        <button className="panel-small-play" type="button">&#9654;</button>
-        <select
-          className="panel-transition-select"
-          value={panel.transition}
-          onChange={(e) => onTransitionChange(panel.id, e.target.value)}
-        >
-          <option value="Auto">Auto</option>
-          <option value="Manual">Manual</option>
-          <option value="Loop">Loop</option>
-        </select>
-      </div>
-
-      <div className="panel-notes">
-        <div className="panel-notes-header">
-          <span className="panel-notes-label">NOTES</span>
-          <button className="panel-notes-edit-btn" type="button" onClick={handleEditClick}>
-            &#9998;
+        <div className="panel-card-actions">
+          <button
+            className="panel-settings-toggle"
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setShowSettings(!showSettings) }}
+            title="Settings"
+          >
+            &#x2699;
+          </button>
+          <button
+            className="panel-delete-toggle"
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDelete(panel.id) }}
+            title="Delete"
+          >
+            &#x2715;
           </button>
         </div>
-        {editing ? (
-          <textarea
-            className="panel-notes-textarea"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={handleBlur}
-            autoFocus
-          />
-        ) : (
-          <div className="panel-notes-text">
-            {panel.notes || 'Click edit to add notes...'}
-          </div>
-        )}
       </div>
+
+      <div className="panel-card-body" onClick={() => onClick(panel)} role="button" tabIndex={0}>
+        <div className="panel-card-image-placeholder">
+          {panel.output_path ? (
+            <span className="panel-card-path-badge" title={panel.output_path}>
+              {panel.output_path.split('/').slice(-2).join('/')}
+            </span>
+          ) : (
+            <span className="panel-card-no-path">No output path set</span>
+          )}
+        </div>
+        <div className="panel-card-click-hint">Click to view cuts</div>
+      </div>
+
+      {showSettings && (
+        <div className="panel-card-settings" onClick={(e) => e.stopPropagation()}>
+          <label className="panel-setting-label">
+            Output Path
+            <input
+              type="text"
+              className="settings-input"
+              value={outputPath}
+              onChange={(e) => setOutputPath(e.target.value)}
+              placeholder="/path/to/ComfyUI/output/..."
+            />
+          </label>
+          <label className="panel-setting-label">
+            Review Prompt
+            <select
+              className="settings-input"
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+            >
+              <option value="">Global Default</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}{t.is_default ? ' (default)' : ''}</option>
+              ))}
+            </select>
+          </label>
+          <label className="panel-setting-label">
+            Transition
+            <select
+              className="settings-input"
+              value={transition}
+              onChange={(e) => setTransition(e.target.value)}
+            >
+              <option value="Auto">Auto</option>
+              <option value="Manual">Manual</option>
+              <option value="Loop">Loop</option>
+            </select>
+          </label>
+          <label className="panel-setting-label">
+            Notes
+            <textarea
+              className="settings-textarea"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+            />
+          </label>
+          <button className="settings-btn settings-btn-primary" onClick={handleSaveSettings} type="button">
+            Save Settings
+          </button>
+        </div>
+      )}
     </div>
   )
 }

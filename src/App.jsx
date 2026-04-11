@@ -16,6 +16,7 @@ function App() {
             <Route path="/" element={<Navigate to="/storyboards" replace />} />
             <Route path="/storyboards" element={<StoryboardPage />} />
             <Route path="/cuts" element={<CutsPage />} />
+            <Route path="/cuts/:panelId" element={<CutsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </div>

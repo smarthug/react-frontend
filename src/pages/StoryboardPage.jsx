@@ -1,42 +1,77 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import PanelCard from '../components/PanelCard'
-
-const initialPanels = [
-  { id: '1', name: 'Panel_01', number: 1, transition: 'Auto', notes: '' },
-  { id: '2', name: 'Panel_02', number: 2, transition: 'Auto', notes: '' },
-  { id: '3', name: 'Panel_03', number: 3, transition: 'Auto', notes: '' },
-  { id: '4', name: 'Panel_04', number: 4, transition: 'Auto', notes: '' },
-  { id: '5', name: 'Panel_05', number: 5, transition: 'Auto', notes: '' },
-  { id: '6', name: 'Panel_06', number: 6, transition: 'Auto', notes: '' },
-]
+import { fetchPanels, createPanel, updatePanel, deletePanel, reorderPanels, fetchTemplates } from '../api'
 
 function StoryboardPage() {
-  const [panels, setPanels] = useState(initialPanels)
-  const [modalPanel, setModalPanel] = useState(null)
+  const [panels, setPanels] = useState([])
+  const [templates, setTemplates] = useState([])
+  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
-  const handleDragEnd = (result) => {
+  const loadData = useCallback(async () => {
+    try {
+      const [p, t] = await Promise.all([fetchPanels(), fetchTemplates()])
+      setPanels(p)
+      setTemplates(t)
+    } catch (err) {
+      console.error('Failed to load panels:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadData() }, [loadData])
+
+  const handleDragEnd = async (result) => {
     if (!result.destination) return
     const items = Array.from(panels)
     const [moved] = items.splice(result.source.index, 1)
     items.splice(result.destination.index, 0, moved)
     setPanels(items)
+    try {
+      await reorderPanels(items.map((p) => p.id))
+    } catch {
+      loadData()
+    }
   }
 
-  const handleTransitionChange = (id, value) => {
-    setPanels((prev) => prev.map((p) => (p.id === id ? { ...p, transition: value } : p)))
+  const handlePanelClick = (panel) => {
+    navigate(`/cuts/${panel.id}`)
   }
 
-  const handleNotesChange = (id, value) => {
-    setPanels((prev) => prev.map((p) => (p.id === id ? { ...p, notes: value } : p)))
+  const handlePanelUpdate = async (id, data) => {
+    try {
+      const updated = await updatePanel(id, data)
+      setPanels((prev) => prev.map((p) => (p.id === id ? updated : p)))
+    } catch (err) {
+      console.error('Failed to update panel:', err)
+    }
   }
 
-  const handlePlayClick = (panel) => {
-    setModalPanel(panel)
+  const handleAddPanel = async () => {
+    const num = panels.length + 1
+    try {
+      await createPanel({ name: `Panel_${String(num).padStart(2, '0')}`, number: num })
+      loadData()
+    } catch (err) {
+      console.error('Failed to create panel:', err)
+    }
   }
 
-  const closeModal = () => {
-    setModalPanel(null)
+  const handleDeletePanel = async (id) => {
+    if (!confirm('Delete this panel and all its cuts?')) return
+    try {
+      await deletePanel(id)
+      loadData()
+    } catch (err) {
+      console.error('Failed to delete panel:', err)
+    }
+  }
+
+  if (loading) {
+    return <div style={{ color: '#9ca3af', padding: 40, textAlign: 'center' }}>Loading panels...</div>
   }
 
   return (
@@ -50,17 +85,19 @@ function StoryboardPage() {
               {...provided.droppableProps}
             >
               {panels.map((panel, index) => (
-                <Draggable key={panel.id} draggableId={panel.id} index={index}>
+                <Draggable key={String(panel.id)} draggableId={String(panel.id)} index={index}>
                   {(provided) => (
                     <div
                       ref={provided.innerRef}
                       {...provided.draggableProps}
                     >
                       <PanelCard
+                        key={`${panel.id}-${panel.output_path}-${panel.prompt_template_id}`}
                         panel={panel}
-                        onTransitionChange={handleTransitionChange}
-                        onNotesChange={handleNotesChange}
-                        onPlayClick={handlePlayClick}
+                        templates={templates}
+                        onUpdate={handlePanelUpdate}
+                        onClick={handlePanelClick}
+                        onDelete={handleDeletePanel}
                         dragHandleProps={provided.dragHandleProps}
                       />
                     </div>
@@ -73,17 +110,9 @@ function StoryboardPage() {
         </Droppable>
       </DragDropContext>
 
-      {modalPanel && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>{modalPanel.name}</h2>
-            <p>Panel #{modalPanel.number}</p>
-            <button className="modal-close-btn" type="button" onClick={closeModal}>
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      <button className="panel-add-btn" onClick={handleAddPanel} type="button">
+        + Add Panel
+      </button>
     </>
   )
 }
