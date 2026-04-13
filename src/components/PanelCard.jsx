@@ -97,18 +97,6 @@ function PanelCard({ panel, templates, onUpdate, onClick, onDelete, dragHandlePr
             </select>
           </label>
           <label className="panel-setting-label">
-            Transition
-            <select
-              className="settings-input"
-              value={transition}
-              onChange={(e) => setTransition(e.target.value)}
-            >
-              <option value="Auto">Auto</option>
-              <option value="Manual">Manual</option>
-              <option value="Loop">Loop</option>
-            </select>
-          </label>
-          <label className="panel-setting-label">
             Notes
             <textarea
               className="settings-textarea"

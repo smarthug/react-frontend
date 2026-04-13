@@ -4,15 +4,10 @@ import {
   createTemplate,
   updateTemplate,
   deleteTemplate,
-  fetchSettings,
-  updateSettings,
 } from '../api'
 
 function SettingsPage() {
   const [templates, setTemplates] = useState([])
-  const [settings, setSettings] = useState({})
-  const [outputDir, setOutputDir] = useState('')
-  const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [editForm, setEditForm] = useState({ name: '', content: '', is_default: false })
   const [showNew, setShowNew] = useState(false)
@@ -25,30 +20,11 @@ function SettingsPage() {
 
   const loadData = async () => {
     try {
-      const [tmpl, sett] = await Promise.all([fetchTemplates(), fetchSettings()])
+      const tmpl = await fetchTemplates()
       setTemplates(tmpl)
-      setSettings(sett)
-      setOutputDir(sett.comfyui_output_dir || '')
     } catch (err) {
       setMessage(`Error: ${err.message}`)
     }
-  }
-
-  const handleSaveOutputDir = async () => {
-    setSaving(true)
-    try {
-      const result = await updateSettings({ comfyui_output_dir: outputDir })
-      if (result.error) {
-        setMessage(result.error)
-      } else {
-        setSettings(result)
-        setMessage('Output directory saved.')
-      }
-    } catch (err) {
-      setMessage(`Error: ${err.message}`)
-    }
-    setSaving(false)
-    setTimeout(() => setMessage(''), 3000)
   }
 
   const handleCreate = async () => {
@@ -99,28 +75,17 @@ function SettingsPage() {
       {message && <div className="settings-message">{message}</div>}
 
       <section className="settings-section">
-        <h3>ComfyUI Output Directory</h3>
-        <div className="settings-row">
-          <input
-            type="text"
-            className="settings-input"
-            value={outputDir}
-            onChange={(e) => setOutputDir(e.target.value)}
-            placeholder="/path/to/ComfyUI/output"
-          />
-          <button className="settings-btn" onClick={handleSaveOutputDir} disabled={saving}>
-            {saving ? 'Saving...' : 'Save'}
-          </button>
-        </div>
-      </section>
-
-      <section className="settings-section">
         <div className="settings-section-header">
           <h3>Review Prompt Templates</h3>
           <button className="settings-btn" onClick={() => setShowNew(!showNew)}>
             {showNew ? 'Cancel' : '+ New Template'}
           </button>
         </div>
+        <p className="settings-hint">
+          프롬프트 템플릿은 Qwen에게 이미지 평가 방식을 지시합니다. 각 패널 설정에서
+          원하는 템플릿을 선택하세요. Output Path는 스토리보드 페이지의 각 패널
+          설정에서 지정합니다.
+        </p>
 
         {showNew && (
           <div className="template-form">
